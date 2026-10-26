@@ -34,7 +34,9 @@ validate(briefing_markdown, fetched_urls) -> (passed, reasons)
 - `passed`: `True` if every rule holds, otherwise `False`.
 - `reasons`: a list of strings, one per broken rule. It is empty when `passed` is `True`.
 
-## Usage
+Limit: the source check only proves a cited URL was fetched. `validate` never sees page text, so it cannot tell whether that page supports the sentence.
+
+## Developer usage
 
 ```python
 from src.validator import validate
@@ -51,6 +53,8 @@ pip install -r requirements.txt
 pytest -v -rP
 ```
 
+## Rep usage
+
 ## Run record
 
 Command: `pytest -v -rP`. The `-rP` flag prints the validator's reasons for every row, including rows that pass.
@@ -61,14 +65,15 @@ platform darwin -- Python 3.9.6, pytest-8.4.2, pluggy-1.6.0 -- /Users/harsh/sale
 cachedir: .pytest_cache
 rootdir: /Users/harsh/sales-call-research-agent
 configfile: pytest.ini
-collecting ... collected 6 items
+collecting ... collected 7 items
 
-tests/test_validator.py::test_validate_matches_expected[SB-01] PASSED    [ 16%]
-tests/test_validator.py::test_validate_matches_expected[SB-02] PASSED    [ 33%]
-tests/test_validator.py::test_validate_matches_expected[SB-03] PASSED    [ 50%]
-tests/test_validator.py::test_validate_matches_expected[SB-04] PASSED    [ 66%]
-tests/test_validator.py::test_validate_matches_expected[SB-05] PASSED    [ 83%]
-tests/test_validator.py::test_validate_matches_expected[SB-06] PASSED    [100%]
+tests/test_validator.py::test_validate_matches_expected[SB-01] PASSED    [ 14%]
+tests/test_validator.py::test_validate_matches_expected[SB-02] PASSED    [ 28%]
+tests/test_validator.py::test_validate_matches_expected[SB-03] PASSED    [ 42%]
+tests/test_validator.py::test_validate_matches_expected[SB-04] PASSED    [ 57%]
+tests/test_validator.py::test_validate_matches_expected[SB-05] PASSED    [ 71%]
+tests/test_validator.py::test_validate_matches_expected[SB-06] PASSED    [ 85%]
+tests/test_validator.py::test_source_check_only_confirms_url_was_fetched PASSED [100%]
 
 ==================================== PASSES ====================================
 ____________________ test_validate_matches_expected[SB-01] _____________________
@@ -89,5 +94,5 @@ SB-05 passed=False reasons=['no source URL at end of sentence: Mailchimp has bee
 ____________________ test_validate_matches_expected[SB-06] _____________________
 ----------------------------- Captured stdout call -----------------------------
 SB-06 passed=False reasons=['source URL was never fetched: https://www.canva.com/enterprise/']
-============================== 6 passed in 0.01s ===============================
+============================== 7 passed in 0.01s ===============================
 ```
