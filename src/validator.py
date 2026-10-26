@@ -8,6 +8,13 @@ HEADINGS = [
 GAP_LINE = "Not found in sources"
 CLOSING_RE = re.compile(r"^Tool calls used: (\d+)$")
 TOOL_CALL_BUDGET = 8
+MIN_TERM_OVERLAP = 0.5
+STEM_LEN = 5
+_STOPWORDS = {
+    "about", "after", "also", "been", "from", "have", "into", "that", "their",
+    "them", "then", "they", "this", "with", "which", "while", "will", "your",
+    "were", "what", "when", "where", "does", "than", "such", "some", "more",
+}
 
 _HEADING_RE = re.compile(r"^\s*(?:#+\s*)?(?:\d+[.)]\s*)?(.+?)\s*:?\s*$")
 _BULLET_RE = re.compile(r"^\s*(?:[-*]|\d+[.)])\s+")
@@ -74,7 +81,24 @@ def _check_sections_present(lines):
     return reasons
 
 
-def _check_sources(lines, fetched_urls):
+def _claim_terms(sentence):
+    # Only the claim counts; a talking point's ", so ask ..." advice is not a fact.
+    claim = _URL_END_RE.sub("", sentence).split(", so ")[0]
+    claim = re.sub(r"^\s*\d+[.)]\s*", "", claim)
+    words = re.findall(r"[a-z0-9]+", claim.lower())
+    return {w[:STEM_LEN] for w in words if len(w) >= 4 and w not in _STOPWORDS}
+
+
+def _page_supports(sentence, text):
+    terms = _claim_terms(sentence)
+    if not terms:
+        return True
+    page = text.lower()
+    found = sum(1 for t in terms if t in page)
+    return found / len(terms) >= MIN_TERM_OVERLAP
+
+
+def _check_sources(lines, fetched_urls, page_text):
     reasons = []
     fetched = set(fetched_urls)
     for sentence in _factual_sentences(lines):
@@ -83,6 +107,8 @@ def _check_sources(lines, fetched_urls):
             reasons.append(f"no source URL at end of sentence: {sentence}")
         elif match.group(1) not in fetched:
             reasons.append(f"source URL was never fetched: {match.group(1)}")
+        elif match.group(1) in page_text and not _page_supports(sentence, page_text[match.group(1)]):
+            reasons.append(f"cited page does not support sentence: {sentence}")
     return reasons
 
 
@@ -98,12 +124,15 @@ def _check_closing(lines):
     return []
 
 
-def validate(briefing_markdown, fetched_urls):
+def validate(briefing_markdown, fetched_urls, page_text=None):
+    """page_text is optional: a dict of URL to that page's text. When a cited
+    URL has text, the sentence's key terms must appear in it."""
+    page_text = page_text or {}
     lines = _lines(briefing_markdown)
     reasons = (
         _check_headings(lines)
         + _check_sections_present(lines)
-        + _check_sources(lines, fetched_urls)
+        + _check_sources(lines, fetched_urls, page_text)
         + _check_closing(lines)
     )
     return (not reasons, reasons)
