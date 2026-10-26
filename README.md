@@ -19,6 +19,8 @@ Four rules:
 4. The budget is 8 tool calls
 ```
 
+A section that contains only the gap line counts as present, and the gap line needs no source URL.
+
 The two exact lines are `Not found in sources` (no period) and `Tool calls used: N`, where N is a whole number of 8 or less. The validator in `src/validator.py` matches them word for word, so use them exactly.
 
 ## Validator inputs and output
